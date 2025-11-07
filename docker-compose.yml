@@ -1,0 +1,103 @@
+services:
+  postfix:
+    image: boky/postfix:latest
+    container_name: nextcloud-postfix
+    hostname: postfix-server
+    extra_hosts:
+      - "ubuntu:172.18.0.1"
+    restart: always
+    environment:
+      # Postfix configuration
+      POSTFIX_hostname: localhost
+      POSTFIX_mailbox_size_limit: 0
+      POSTFIX_virtual_mailbox_size_limit: 0
+      POSTFIX_message_size_limit: 26214400  # 25MB
+      
+      # SMTP settings
+      POSTFIX_SMTP_NETWORKS: 0.0.0.0/0
+      POSTFIX_INET_INTERFACES: all
+      
+      # Disable TLS/SSL for local connections
+      POSTFIX_smtpd_tls_security_level: none
+      POSTFIX_smtp_tls_security_level: none
+      
+      # Allow all sender domains (remove this if you want to restrict specific domains)
+      ALLOW_EMPTY_SENDER_DOMAINS: 1
+      
+      # Relay emails to the mailserver
+      POSTFIX_relayhost: "[nextcloud-mailserver]:25"
+      POSTFIX_mydestination: ""
+      POSTFIX_virtual_mailbox_domains: "mail.nextcloud.local"
+      
+      # Optional: Set the relay host if needed
+      # POSTFIX_RELAYHOST: [mail.example.com]:587
+    ports:
+      - "2525:25"    # SMTP (unauthenticated) - host port 2525 -> container port 25
+      - "2587:587"   # Submission port (TLS) - host port 2587 -> container port 587
+      - "2465:465"   # SMTPS (implicit TLS) - host port 2465 -> container port 465
+    volumes:
+      - postfix_spool:/var/spool/postfix
+      - postfix_logs:/var/log
+      - ./postfix/sasl:/etc/postfix/sasl
+    networks:
+      - nextcloud_network
+    healthcheck:
+      test: ["CMD", "postfix", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Complete mail server with IMAP/POP3 support
+  mailserver:
+    image: mailserver/docker-mailserver:latest
+    container_name: nextcloud-mailserver
+    hostname: mail.nextcloud.local
+    ports:
+      - "3025:25"    # SMTP
+      - "3143:143"   # IMAP  
+      - "3993:993"   # IMAPS
+      - "3110:110"   # POP3
+      - "3995:995"   # POP3S
+    volumes:
+      - ./mailserver/mail-data:/var/mail
+      - ./mailserver/config:/tmp/docker-mailserver
+    environment:
+      - ENABLE_SPAMASSASSIN=0
+      - ENABLE_CLAMAV=0
+      - ENABLE_FAIL2BAN=0
+      - ONE_DIR=1
+      - DMS_DEBUG=1
+      - ENABLE_QUOTAS=0
+      - ENABLE_POSTGREY=0
+      - POSTMASTER_ADDRESS=admin@mail.nextcloud.local
+      - POSTFIX_smtpd_helo_required=no
+      - POSTFIX_smtpd_helo_restrictions=permit
+    networks:
+      - nextcloud_network
+
+  # Web-based email client (Roundcube)
+  roundcube:
+    image: roundcube/roundcubemail:latest
+    container_name: nextcloud-roundcube
+    ports:
+      - "8080:80"    # Web interface (avoid conflict with Nextcloud)
+    environment:
+      - ROUNDCUBEMAIL_DEFAULT_HOST=nextcloud-mailserver
+      - ROUNDCUBEMAIL_DEFAULT_PORT=143
+      - ROUNDCUBEMAIL_SMTP_SERVER=nextcloud-postfix
+      - ROUNDCUBEMAIL_SMTP_PORT=25
+    networks:
+      - nextcloud_network
+    depends_on:
+      - mailserver
+      - postfix
+
+volumes:
+  postfix_spool:
+    driver: local
+  postfix_logs:
+    driver: local
+
+networks:
+  nextcloud_network:
+    driver: bridge

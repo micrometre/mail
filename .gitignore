@@ -1,0 +1,46 @@
+# Sensitive configuration files
+mailserver/config/postfix-accounts.cf
+dovecot/config/dovecot-quotas.cf
+
+# Mail data directories
+mailserver/mail-data/
+dovecot/mail-data/
+postfix/mail-data/
+
+# Docker volumes and persistent data
+*/mail-data/
+*/mail-state/
+*/mail-logs/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Backup files
+*.bak
+*.backup
