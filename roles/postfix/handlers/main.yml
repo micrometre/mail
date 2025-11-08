@@ -1,0 +1,8 @@
+---
+- name: restart postfix
+  systemd:
+    name: postfix
+    state: restarted
+
+- name: postmap virtual domains
+  command: postmap /etc/postfix/virtual_mailbox_domains

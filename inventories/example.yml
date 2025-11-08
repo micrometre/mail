@@ -1,0 +1,37 @@
+# Example inventory file for development/testing
+# Copy this file to production.yml and modify for your environment
+
+---
+all:
+  children:
+    mailservers:
+      hosts:
+        mail.yourdomain.com:
+          ansible_host: 10.0.0.100
+          ansible_user: ubuntu
+          ansible_ssh_private_key_file: ~/.ssh/id_rsa
+      vars:
+        # REQUIRED: Change these values for your setup
+        mail_domain: yourdomain.com
+        mail_hostname: mail.yourdomain.com
+        
+        # SSL Certificate paths - MUST exist on target server
+        ssl_cert_path: "/etc/letsencrypt/live/yourdomain.com/fullchain.pem"
+        ssl_key_path: "/etc/letsencrypt/live/yourdomain.com/privkey.pem"
+        
+        # Email accounts to create - CHANGE THE PASSWORDS!
+        mail_users:
+          - email: "admin@yourdomain.com"
+            password: "CHANGE_THIS_PASSWORD"
+          - email: "info@yourdomain.com"
+            password: "CHANGE_THIS_TOO"
+          - email: "support@yourdomain.com"
+            password: "AND_THIS_ONE"
+        
+        # Apache configuration
+        apache_server_admin: "admin@yourdomain.com"
+        
+        # Roundcube configuration  
+        roundcube_db_path: "/var/lib/roundcube/sqlite.db"
+        # This will be auto-generated - don't change unless needed
+        roundcube_des_key: "{{ lookup('password', '/tmp/roundcube_des_key chars=ascii_letters,digits length=24') }}"

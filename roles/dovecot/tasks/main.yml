@@ -1,0 +1,72 @@
+---
+- name: Install Dovecot packages
+  apt:
+    name:
+      - dovecot-core
+      - dovecot-imapd
+      - dovecot-pop3d
+      - dovecot-lmtpd
+    state: present
+
+- name: Configure Dovecot mail location
+  lineinfile:
+    path: /etc/dovecot/conf.d/10-mail.conf
+    regexp: '^#mail_location'
+    line: 'mail_location = maildir:/var/mail/vhosts/%d/%n'
+    backup: yes
+  notify: restart dovecot
+
+- name: Configure Dovecot master service
+  template:
+    src: 10-master.conf.j2
+    dest: /etc/dovecot/conf.d/10-master.conf
+    backup: yes
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart dovecot
+
+- name: Configure Dovecot authentication
+  template:
+    src: 10-auth.conf.j2
+    dest: /etc/dovecot/conf.d/10-auth.conf
+    backup: yes
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart dovecot
+
+- name: Configure Dovecot password file authentication
+  template:
+    src: auth-passwdfile.conf.ext.j2
+    dest: /etc/dovecot/conf.d/auth-passwdfile.conf.ext
+    backup: yes
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart dovecot
+
+- name: Create Dovecot users file
+  template:
+    src: dovecot-users.j2
+    dest: /etc/dovecot/dovecot-users
+    owner: root
+    group: dovecot
+    mode: '0640'
+  notify: restart dovecot
+
+- name: Configure Dovecot SSL
+  template:
+    src: 10-ssl.conf.j2
+    dest: /etc/dovecot/conf.d/10-ssl.conf
+    backup: yes
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart dovecot
+
+- name: Start and enable Dovecot
+  systemd:
+    name: dovecot
+    state: started
+    enabled: yes

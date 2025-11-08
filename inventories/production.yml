@@ -1,0 +1,33 @@
+---
+all:
+  children:
+    mailservers:
+      hosts:
+        mail.example.com:
+          ansible_host: 192.168.1.100
+          ansible_user: ubuntu
+          ansible_ssh_private_key_file: ~/.ssh/id_rsa
+      vars:
+        # Domain configuration
+        mail_domain: example.com
+        mail_hostname: mail.example.com
+        
+        # SSL Certificate paths (adjust for your setup)
+        ssl_cert_path: "/etc/letsencrypt/live/{{ mail_domain }}/fullchain.pem"
+        ssl_key_path: "/etc/letsencrypt/live/{{ mail_domain }}/privkey.pem"
+        
+        # Email accounts to create
+        mail_users:
+          - email: "admin@{{ mail_domain }}"
+            password: "secure_password_123"
+          - email: "info@{{ mail_domain }}"
+            password: "another_secure_password"
+          - email: "billing@{{ mail_domain }}"
+            password: "billing_password_456"
+        
+        # Apache configuration
+        apache_server_admin: "admin@{{ mail_domain }}"
+        
+        # Roundcube configuration
+        roundcube_db_path: "/var/lib/roundcube/sqlite.db"
+        roundcube_des_key: "{{ lookup('password', '/tmp/roundcube_des_key chars=ascii_letters,digits length=24') }}"

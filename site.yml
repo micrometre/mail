@@ -1,0 +1,93 @@
+---
+- name: Deploy Mail Server with Postfix, Dovecot, and Roundcube
+  hosts: mailservers
+  become: yes
+  gather_facts: yes
+  
+  pre_tasks:
+    - name: Verify required variables are defined
+      assert:
+        that:
+          - mail_domain is defined
+          - mail_hostname is defined
+          - mail_users is defined
+        fail_msg: "Required variables are not defined. Check your inventory file."
+    
+    - name: Update /etc/hosts for localhost development
+      lineinfile:
+        path: /etc/hosts
+        regexp: "^127\\.0\\.0\\.1.*{{ mail_domain }}"
+        line: "127.0.0.1 {{ mail_domain }} {{ mail_hostname }}"
+        backup: yes
+      when: ansible_connection == "local"
+
+  roles:
+    - role: common
+      tags: ['common', 'base']
+    
+    - role: ssl-certs
+      tags: ['ssl', 'certificates']
+    
+    - role: apache
+      tags: ['apache', 'web']
+    
+    - role: postfix
+      tags: ['postfix', 'mta']
+    
+    - role: dovecot
+      tags: ['dovecot', 'imap', 'pop3']
+    
+    - role: roundcube
+      tags: ['roundcube', 'webmail']
+
+  post_tasks:
+    - name: Create virtual mailbox maps for Postfix
+      lineinfile:
+        path: /etc/postfix/virtual_mailbox_maps
+        line: "{{ item.email }} {{ mail_domain }}/{{ item.email.split('@')[0] }}/"
+        create: yes
+        owner: root
+        group: root
+        mode: '0644'
+      loop: "{{ mail_users }}"
+      notify: 
+        - postmap virtual mailboxes
+        - restart postfix
+
+    - name: Generate postmap for virtual mailboxes
+      command: postmap /etc/postfix/virtual_mailbox_maps
+      changed_when: false
+
+    - name: Test email service connectivity
+      wait_for:
+        host: "{{ inventory_hostname }}"
+        port: "{{ item }}"
+        timeout: 10
+      loop:
+        - 25   # SMTP
+        - 587  # SMTP Submission
+        - 993  # IMAPS
+        - 995  # POP3S
+        - 443  # HTTPS
+      delegate_to: localhost
+      become: no
+
+    - name: Display access information
+      debug:
+        msg:
+          - "Mail server setup completed successfully!"
+          - "Webmail access: https://{{ mail_hostname }}/mail"
+          - "IMAP server: {{ mail_hostname }}:993 (SSL)"
+          - "POP3 server: {{ mail_hostname }}:995 (SSL)"
+          - "SMTP server: {{ mail_hostname }}:587 (STARTTLS)"
+          - "Created email accounts:"
+          - "{% for user in mail_users %}- {{ user.email }}{% endfor %}"
+
+  handlers:
+    - name: postmap virtual mailboxes
+      command: postmap /etc/postfix/virtual_mailbox_maps
+
+    - name: restart postfix
+      systemd:
+        name: postfix
+        state: restarted

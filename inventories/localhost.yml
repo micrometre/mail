@@ -1,0 +1,41 @@
+---
+# Localhost development inventory
+# Perfect for learning and testing mail server setup
+all:
+  children:
+    mailservers:
+      hosts:
+        localhost:
+          ansible_connection: local
+          ansible_become: yes
+      vars:
+        # Domain configuration for localhost
+        mail_domain: localhost.local
+        mail_hostname: mail.localhost.local
+        
+        # Self-signed SSL certificate configuration
+        ssl_cert_type: "selfsigned"
+        ssl_country: "US"
+        ssl_state: "Development"
+        ssl_city: "Local"
+        ssl_organization: "Mail Server Learning"
+        ssl_organizational_unit: "IT Learning Lab"
+        
+        # Email accounts for testing
+        mail_users:
+          - email: "admin@localhost.local"
+            password: "admin123"
+          - email: "test@localhost.local"
+            password: "test123"
+          - email: "user@localhost.local"
+            password: "user123"
+        
+        # Apache configuration
+        apache_server_admin: "admin@localhost.local"
+        
+        # Roundcube configuration
+        roundcube_db_path: "/var/lib/roundcube/sqlite.db"
+        roundcube_des_key: "dev_key_for_learning_only"
+        
+        # Development-friendly settings
+        timezone: "UTC"

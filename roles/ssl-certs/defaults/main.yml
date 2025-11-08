@@ -1,0 +1,28 @@
+---
+# SSL Certificate configuration
+
+# Certificate type: 'selfsigned' or 'letsencrypt'
+ssl_cert_type: "selfsigned"
+
+# Certificate paths
+ssl_cert_dir: "/etc/ssl/mailserver"
+ssl_cert_path: "{{ ssl_cert_dir }}/{{ mail_domain }}.crt"
+ssl_key_path: "{{ ssl_cert_dir }}/{{ mail_domain }}.key"
+
+# Self-signed certificate configuration
+ssl_country: "US"
+ssl_state: "State"
+ssl_city: "City"
+ssl_organization: "Organization"
+ssl_organizational_unit: "IT Department"
+ssl_email: "admin@{{ mail_domain }}"
+
+# Certificate validity period (days)
+ssl_cert_days: 365
+
+# Subject Alternative Names for self-signed certificates
+ssl_subject_alt_names:
+  - "DNS:{{ mail_domain }}"
+  - "DNS:mail.{{ mail_domain }}"
+  - "DNS:localhost"
+  - "IP:127.0.0.1"

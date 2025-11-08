@@ -1,0 +1,7 @@
+---
+# Ansible Galaxy requirements for the mail server playbook
+collections:
+  - name: community.general
+    version: ">=4.0.0"
+  - name: ansible.posix
+    version: ">=1.0.0"

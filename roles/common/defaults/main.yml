@@ -1,0 +1,27 @@
+---
+# Common role default variables
+
+# System packages to install
+common_packages:
+  - curl
+  - wget
+  - unzip
+  - software-properties-common
+  - apt-transport-https
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - ufw
+
+# Timezone
+timezone: "UTC"
+
+# Firewall rules
+firewall_rules:
+  - { port: "22", rule: "allow" }    # SSH
+  - { port: "25", rule: "allow" }    # SMTP
+  - { port: "80", rule: "allow" }    # HTTP
+  - { port: "443", rule: "allow" }   # HTTPS
+  - { port: "587", rule: "allow" }   # SMTP Submission
+  - { port: "993", rule: "allow" }   # IMAPS
+  - { port: "995", rule: "allow" }   # POP3S

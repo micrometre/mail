@@ -1,0 +1,66 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install common packages
+  apt:
+    name: "{{ common_packages }}"
+    state: present
+
+- name: Set timezone
+  timezone:
+    name: "{{ timezone }}"
+
+- name: Configure UFW firewall
+  ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: tcp
+  loop: "{{ firewall_rules }}"
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+    policy: deny
+    direction: incoming
+
+- name: Create vmail group
+  group:
+    name: vmail
+    gid: 5000
+    state: present
+
+- name: Create vmail user
+  user:
+    name: vmail
+    uid: 5000
+    group: vmail
+    home: /var/mail/vhosts
+    shell: /bin/false
+    system: yes
+    comment: "virtual mail user"
+    state: present
+
+- name: Create mail directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: vmail
+    group: vmail
+    mode: '0755'
+  loop:
+    - /var/mail/vhosts
+    - "/var/mail/vhosts/{{ mail_domain }}"
+
+- name: Ensure hostname is set correctly
+  hostname:
+    name: "{{ mail_hostname }}"
+
+- name: Update /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    regexp: "^127\\.0\\.1\\.1"
+    line: "127.0.1.1 {{ mail_hostname }} {{ mail_hostname.split('.')[0] }}"
+    backup: yes

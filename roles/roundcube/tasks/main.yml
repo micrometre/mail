@@ -1,0 +1,119 @@
+---
+- name: Install SQLite3 and required packages
+  apt:
+    name:
+      - roundcube-core
+      - sqlite3
+      - php-sqlite3
+    state: present
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: Install Roundcube plugins
+  apt:
+    name:
+      - roundcube-plugins
+    state: present
+
+- name: Create Roundcube database directory
+  file:
+    path: "{{ roundcube_db_path | dirname }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Check if Roundcube SQLite database exists
+  stat:
+    path: "{{ roundcube_db_path }}"
+  register: roundcube_db_stat
+
+- name: Find Roundcube SQL initialization file
+  find:
+    paths:
+      - /usr/share/roundcube/SQL
+      - /usr/share/roundcube/sql
+      - /var/lib/roundcube/SQL
+    patterns: "sqlite.initial.sql"
+    recurse: yes
+  register: roundcube_sql_file
+
+- name: Find Roundcube SQL initialization file
+  find:
+    paths:
+      - /usr/share/roundcube/SQL
+      - /usr/share/roundcube/sql
+      - /var/lib/roundcube/SQL
+    patterns: "sqlite.initial.sql"
+    recurse: yes
+  register: roundcube_sql_file
+
+- name: Initialize Roundcube SQLite database from SQL file
+  shell: |
+    sqlite3 {{ roundcube_db_path }} < {{ roundcube_sql_file.files[0].path }}
+  args:
+    creates: "{{ roundcube_db_path }}"
+  when: 
+    - not roundcube_db_stat.stat.exists
+    - roundcube_sql_file.files | length > 0
+
+- name: Create basic Roundcube SQLite database if SQL file not found
+  shell: |
+    sqlite3 {{ roundcube_db_path }} "CREATE TABLE IF NOT EXISTS system (name varchar(64) NOT NULL PRIMARY KEY, value text NOT NULL);"
+  args:
+    creates: "{{ roundcube_db_path }}"
+  when: 
+    - not roundcube_db_stat.stat.exists
+    - roundcube_sql_file.files | length == 0
+
+- name: Display warning if SQL file not found
+  debug:
+    msg: "Warning: Roundcube SQL initialization file not found. Created basic database. You may need to run Roundcube installer manually."
+  when: roundcube_sql_file.files | length == 0
+
+- name: Set proper permissions for Roundcube database
+  file:
+    path: "{{ roundcube_db_path }}"
+    owner: www-data
+    group: www-data
+    mode: '0644'
+
+- name: Configure Roundcube main config
+  template:
+    src: config.inc.php.j2
+    dest: /etc/roundcube/config.inc.php
+    owner: root
+    group: www-data
+    mode: '0640'
+    backup: yes
+  notify: restart apache2
+
+- name: Create Roundcube debian config
+  template:
+    src: debian-db.php.j2
+    dest: /etc/roundcube/debian-db.php
+    owner: root
+    group: www-data
+    mode: '0640'
+  notify: restart apache2
+
+- name: Remove Roundcube installer for security
+  file:
+    path: /usr/share/roundcube/installer
+    state: absent
+
+- name: Create Roundcube temp directory
+  file:
+    path: /var/lib/roundcube/temp
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Create Roundcube logs directory
+  file:
+    path: /var/log/roundcube
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'

@@ -1,0 +1,114 @@
+<?php
+
+/*
+ +-----------------------------------------------------------------------+
+ | Roundcube Webmail configuration file                                 |
+ +-----------------------------------------------------------------------+
+ | This is the main configuration file for Roundcube.                   |
+ +-----------------------------------------------------------------------+
+*/
+
+$config = array();
+
+// ----------------------------------
+// SQL DATABASE
+// ----------------------------------
+$config['db_dsnw'] = 'sqlite:{{ roundcube_db_path }}';
+$config['db_table_users'] = 'users';
+$config['db_table_identities'] = 'identities';
+$config['db_table_contacts'] = 'contacts';
+$config['db_table_contactgroups'] = 'contactgroups';
+$config['db_table_contactgroupmembers'] = 'contactgroupmembers';
+$config['db_sequence_users'] = 'user_ids';
+$config['db_sequence_identities'] = 'identity_ids';
+$config['db_sequence_contacts'] = 'contact_ids';
+$config['db_sequence_contactgroups'] = 'contactgroups_ids';
+
+// ----------------------------------
+// IMAP
+// ----------------------------------
+$config['default_host'] = 'localhost';
+$config['default_port'] = 993;
+$config['imap_conn_options'] = array(
+  'ssl' => array(
+    'verify_peer'  => false,
+    'verify_peer_name' => false,
+  ),
+);
+$config['imap_timeout'] = 300;
+
+// ----------------------------------
+// SMTP
+// ----------------------------------
+$config['smtp_server'] = 'localhost';
+$config['smtp_port'] = 587;
+$config['smtp_user'] = '%u';
+$config['smtp_pass'] = '%p';
+$config['smtp_conn_options'] = array(
+  'ssl' => array(
+    'verify_peer'      => false,
+    'verify_peer_name' => false,
+  ),
+);
+
+// ----------------------------------
+// SYSTEM
+// ----------------------------------
+$config['enable_installer'] = false;
+$config['support_url'] = '';
+$config['product_name'] = 'Roundcube Webmail';
+$config['des_key'] = '{{ roundcube_des_key }}';
+$config['cipher_method'] = 'AES-256-CBC';
+$config['useragent'] = 'Roundcube Webmail/1.6.0';
+
+// ----------------------------------
+// USER INTERFACE
+// ----------------------------------
+$config['language'] = 'en_US';
+$config['auto_create_user'] = true;
+$config['check_all_folders'] = false;
+
+// ----------------------------------
+// USER PREFERENCES
+// ----------------------------------
+$config['default_charset'] = 'UTF-8';
+$config['addressbook_sort_col'] = 'surname';
+$config['default_font_size'] = '12pt';
+$config['draft_autosave'] = 300;
+$config['preview_pane'] = true;
+$config['preview_pane_mark_read'] = 0;
+$config['htmleditor'] = 1;
+$config['show_images'] = 0;
+$config['message_cache_lifetime'] = '10d';
+
+// ----------------------------------
+// SECURITY
+// ----------------------------------
+$config['use_https'] = true;
+$config['login_autocomplete'] = 2;
+$config['password_charset'] = 'UTF-8';
+$config['sendmail_delay'] = 0;
+$config['max_message_size'] = '25M';
+
+// ----------------------------------
+// PLUGINS
+// ----------------------------------
+$config['plugins'] = array(
+    'archive',
+    'zipdownload',
+    'filesystem_attachments',
+);
+
+// ----------------------------------
+// LOGS/DEBUGGING
+// ----------------------------------
+$config['log_driver'] = 'file';
+$config['log_dir'] = '/var/log/roundcube/';
+$config['temp_dir'] = '/var/lib/roundcube/temp/';
+
+// List of active plugins (in plugins/ directory)
+$config['plugins'] = array();
+
+// ----------------------------------
+// END CONFIGURATION
+// ----------------------------------
